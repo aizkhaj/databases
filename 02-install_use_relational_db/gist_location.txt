@@ -1,0 +1,3 @@
+Here, I had to create a table in psql and then run a SQL statement. The results were posted in the following gist.
+
+https://gist.github.com/aizkhaj/460fa387ac5c1b23537ad7199b86c3e8
