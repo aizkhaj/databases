@@ -64,6 +64,7 @@
     - Find three books and add their information to the table.
         INSERT INTO books
         VALUES 
+
         ('978-0262033848', 'Introduction to Algorithms', 	'Thomas H. Cormen', 'Textbooks', 07/31/2009, 3, 2),
         ('978-0132350884', 'Clean Code: A Handbook of Agile Software Craftsmanship', 'Robert C. Martin', 'Textbooks', 08/01/2008, 2, 1),
         ('978-1368012355', 'Aru Shah and the End of Time (A Pandava Novel Book 1)', 'Roshani Chokshi', 'Fantasy', 03/27/2018, 0, 0);
@@ -89,6 +90,7 @@
     - Add 3 non-Earth-orbiting satellites to the table.
     INSERT INTO spacecrafts
     VALUES
+
     (1, 'Rocketship', 1990, 'Canada', 'to hover over Canada and monitor Geese population.', 'somethingneat', true, 12345.34),
     (2, 'Futureship', 2309, 'Atlantis', 'beep boop something something', 'Astra', true, 230950.39),
     (3, 'Ancient Ascension', 4059, 'Martian Sector 1', 'to discover new technologies from the past?', 'totallycool', true, 2693021.04);
@@ -114,6 +116,7 @@
     - Add 3 new emails to the inbox.
     INSERT INTO emails
     VALUES
+
     (12, 'Let's build a bear!', 'fiancee@email.com', '', 'I really want toooooo. kthxbye', 2018-03-12 17:05:08, true, 1),
     (15, 'Buy something from me', 'forgottensubscription@email.com', '', 'Trust me, this will change your life for only $19.99. But wait, there's more!', 2018-03-12 18:05:18, false, 23),
     (19, 'I'm going to sneak into your inbox and pretend to be a rich prince', 'spammer@email.com', '', 'Soo...I recently inherited money but need someone else to deposit it for me. I'll make it your worthwhile, I promise!', 2018-03-30 06:06:06, false, 21);
