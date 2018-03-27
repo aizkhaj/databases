@@ -1,0 +1,140 @@
+1. How do you find related data that is held in two separate data tables?
+    Use JOINs to connect the two tables in a query.
+
+2. Explain, in your own words, the difference between a CROSS JOIN, INNER JOIN, LEFT OUTER JOIN, RIGHT OUTER JOIN, and FULL OUTER JOIN. Give a real world example for each.
+    - CROSS JOIN allows you to receive all possible combinations from two tables of data. It basically multiplies the number of rows from table A by the number of rows in table B. Not really sure how many practical uses are available for this, but you can definitely create a lot of dummy data for use. An example could be a table of teams, and a table of players. By combining the data with a cross join, you could get a results table of all combinations of teams with each player.
+
+    - INNER JOIN allows you to connect two tables and outputs only rows where both tables share data. For example, let's say you have a table of Laptops and a table of prices. With an inner join, you will only receive data for laptops and prices of those laptops (connected by laptop.id in both tables).
+
+    - LEFT OUTER JOIN allows you to receive all the information from one of the tables, while only selecting information from the other table where it shares a connection (i.e. where the primary and foreign keys connect.) Suppose we have a table of laptops in the market that we want all the information for, and then we connect it to a table of prices that only connects to the laptop table with laptop.id. In our results, we will get a table of all laptops on the market, and only the prices we have on the laptops in our prices table. The other prices for laptops we don't have prices on, will show up null.
+
+    - RIGHT OUTER JOIN works similar to LEFT OUTER JOIN except it would work the other way around. For example, if we use our example of laptops and prices tables, but this time have an RIGHT OUTER JOIN for prices instead; our results would mean that we have all prices data, but only show the laptops that have a shared key. Other than that, it will show null.
+
+    - FULL OUTER JOIN works to show an INNER JOIN + LEFT/RIGHT OUTER JOINS. In a single results table, it will show you all data from both tables, as well as rows that include data with common information from the INNER JOIN. e.g. if you have a table of flights and planes, you could see a result table with information on all flights and all planes, with NULL in places where a plane may not have a flight, and a flight may not have an assigned plane.
+
+3. Define primary key and foreign key. Give a real world example for each.
+    Primary key in a table is its native unique identifier. A foreign key in that same table is not native to that table, but a primary key from another table. A foreign key helps in connecting two, usually somewhat relevant tables together for meaningful datasets. 
+    
+    E.g. a table of Flights will have a primary key to identify each flight, with a plane_ID as a foreign key  to identify any planes that may be assigned to a flight. This foreign key would be the same number of IDs available from the Planes table (where it hosts this ID as the primary key).
+
+4. Define aliasing.
+    Aliasing allows you to basically create more convenient aliases for your JOIN statements in reference to tables. e.g. Flights AS f in a statement would allow you to reference Flight.id as f.id.
+
+5. Change this query so that you are using aliasing:
+    SELECT professor.name, compensation.salary, compensation.vacation_days 
+    FROM professor 
+    JOIN compensation 
+    ON professor.id = compensation.professor_id;
+    ===================================================
+    SELECT p.name, c.salary, c.vacation_days
+    FROM professor AS p
+    JOIN compensation AS c
+    ON p.id = c.professor_id;
+
+
+6. Why would you use a NATURAL JOIN? Give a real world example.
+    A natural join allows you to return a results table with data based on columns from both tables where the names match. This could come in handy with situations where there's a lot of data in a table, or if there are multiple ID fields. In this case, you can use a NATURAL JOIN to return one field where two tables connect on, and then the data related to that record in your table that you're connecting from.
+
+    e.g. a Company table and Foods table that has company_id field as well. With a natural join, you'd be able to get results like an inner join, without having to communicate further criteria.
+
+
+7. Using this Employee schema and data, write queries to find the following information:
+  - All employees with their shifts if they have any. Also include any unscheduled shifts.
+    SELECT *
+    FROM shifts
+    LEFT OUTER JOIN scheduled_shifts
+    ON shifts.id = scheduled_shifts.shift_id;
+
+
+8. Using this Adoption schema and data, please write queries to retrieve the following information and include the results:
+  - All volunteers. If the volunteer is fostering a dog, include each dog as well.
+    SELECT *
+    FROM volunteers AS v
+    LEFT OUTER JOIN dogs AS d
+    ON v.foster_dog_id = d.id;
+
+  - The cat's name, adopter's name, and adopted date for each cat adopted within the past month to be displayed as part of the "Happy Tail" social media promotion which posts recent successful adoptions.
+    SELECT adopters.first_name, adopters.last_name, cat_adoptions.date, cats.name
+    FROM cat_adoptions
+    JOIN cats ON cats.id = cat_adoptions.cat_id
+    JOIN adopters ON adopters.id = cat_adoptions.adopter_id
+    WHERE cat_adoptions.date > CURRENT_DATE - INTERVAL '30 DAYS';
+
+  - Adopters who have not yet chosen a dog to adopt and generate all possible combinations of adopters and available dogs.
+    SELECT adopters.id AS adopter_id, adopters.first_name, adopters.last_name, adopters.address, adopters.phone_number, dogs.id AS dog_id, dogs.name
+    FROM adopters
+    FULL OUTER JOIN dog_adoptions
+    ON dog_adoptions.adopter_id = adopters.id
+    CROSS JOIN dogs
+    WHERE dog_adoptions.adopter_id IS NULL AND dogs.id NOT IN (SELECT dog_id FROM dog_adoptions)
+    ORDER BY dog_id ASC;
+
+  - Lists of all cats and all dogs who have not been adopted.
+    SELECT name FROM dogs
+    WHERE in_foster IS NULL
+    UNION
+    SELECT name FROM cats
+    WHERE adoption_date IS NULL;
+
+  - Volunteers who are available to foster. If they currently are fostering a dog, include the dog. Also include all dogs who are not currently in foster homes.
+    SELECT v.id AS volunteer_id, v.first_name, v.last_name, v.available_to_foster, v.foster_dog_id, d.name AS dog_name, d.in_foster
+    FROM volunteers AS v
+    LEFT OUTER JOIN dogs AS d ON v.foster_dog_id = d.id
+    WHERE v.available_to_foster = true AND d.in_foster IS NULL;
+
+  - The name of the person who adopted Rosco.
+    SELECT d.id AS dog_id, d.name AS dog_name, dog_adoptions.adopter_id, a.first_name, a.last_name
+    FROM dog_adoptions
+    JOIN dogs AS d ON d.id = dog_adoptions.dog_id
+    JOIN adopters AS a ON a.id = dog_adoptions.adopter_id
+    WHERE d.name = 'Rosco';
+
+9. Using this Library schema and data, write queries applying the following scenarios:
+  - To determine if the library should buy more copies of a given book, please provide the names and position, in order, of all of the patrons with a hold (request for a book with all copies checked out) on "Advanced Potion-Making".
+    SELECT patrons.name, holds.rank, holds.isbn, books.title
+    FROM holds
+    JOIN patrons ON patrons.id = holds.patron_id
+    JOIN books ON books.isbn = holds.isbn
+    WHERE books.title = 'Advanced Potion-Making'
+    ORDER BY holds.rank ASC;
+
+  - Make a list of all book titles and denote whether or not a copy of that book is checked out.
+    SELECT books.title, transactions.checked_out_date, transactions.checked_in_date,
+      CASE
+        WHEN transactions.checked_in_date IS NULL THEN 'checked out'
+        ELSE 'checked in'
+      END
+      AS checked_in_or_not
+    FROM books
+    LEFT OUTER JOIN transactions ON transactions.isbn = books.isbn
+    ORDER BY transactions.checked_out_date DESC;
+
+  - In an effort to learn which books take longer to read, the librarians would like you to create a list of total checked out time by book name in the past month.
+    SELECT books.title, 
+      SUM(transactions.checked_in_date - transactions.checked_out_date) AS total_time_checked_out
+    FROM books
+    LEFT OUTER JOIN transactions ON transactions.isbn = books.isbn
+    GROUP BY books.title;
+
+  - In order to learn which items should be retired, make a list of all books that have not been checked out in the past 5 years.
+    SELECT books.isbn, books.title
+    FROM books
+    LEFT OUTER JOIN transactions ON books.isbn = transactions.isbn
+    WHERE books.title NOT IN (
+      SELECT books.title
+      FROM books
+      LEFT OUTER JOIN transactions ON books.isbn = transactions.isbn
+      WHERE transactions.checked_out_date > CURRENT_DATE - INTERVAL '5 YEARS'
+    );
+
+  - List all of the library patrons. If they have one or more books checked out, correspond the books to the patrons.
+    SELECT patrons.name, books.title, 
+      CASE
+        WHEN transactions.checked_in_date IS NULL THEN 'checked out'
+        ELSE 'checked in'
+      END
+      AS checked_in_or_not
+    FROM transactions
+    RIGHT OUTER JOIN patrons ON patrons.id = transactions.patron_id
+    RIGHT OUTER JOIN books ON books.isbn = transactions.isbn
+    ORDER BY patrons.name;
