@@ -1,0 +1,94 @@
+1. Hotel database queries (see hotel_database.sql for schema):
+
+- Find a guest who exists in the database and has not booked a room.
+    SELECT guests.name, bookings.id AS booking_id
+    FROM guests
+    FULL OUTER JOIN bookings ON bookings.guest_id = guests.id
+    WHERE bookings.id IS NULL;
+
+    name 	booking_id
+    Woody 	(null)
+
+- Find bookings for a guest who has booked two rooms for the same dates.
+    SELECT guests.name, ARRAY_AGG(bookings.room_number) AS room_numbers, bookings.check_in_date
+    FROM bookings
+    JOIN guests ON guests.id = bookings.guest_id
+    GROUP BY guests.name, bookings.check_in_date
+    HAVING COUNT(bookings.room_number) > 1;
+
+    name 	room_numbers 	check_in_date
+    Andy 	104,105 	    2018-01-19
+
+- Find bookings for a guest who has booked one room several times on different dates.
+    SELECT guests.name, ARRAY_AGG(bookings.check_in_date) AS check_in_dates, bookings.room_number
+    FROM bookings
+    JOIN guests ON guests.id = bookings.guest_id
+    GROUP BY guests.name, bookings.room_number
+    HAVING COUNT(bookings.check_in_date) > 1;
+
+    name 	    check_in_dates 	        room_number
+    Deadpool 	2018-01-20,2018-01-29 	101
+
+- Count the number of unique guests who have booked the same room.
+    SELECT COUNT(guests.id) AS count_unique_guest_id, bookings.room_number
+    FROM bookings
+    JOIN guests ON guests.id = bookings.guest_id
+    GROUP BY bookings.room_number
+    HAVING COUNT(DISTINCT guests.id) > 1;
+
+    count_unique_guest_id 	room_number
+    2 	                    104
+
+2. See school data model.png file in repo.
+
+3. School database queries (see school_database.sql for schema):
+
+- All students who have taken a particular class.
+    SELECT students.name AS student_name, classes.subject_name
+    FROM students
+    JOIN enrollments ON enrollments.student_id = students.student_id
+    JOIN classes ON classes.class_id = enrollments.class_id
+    WHERE classes.subject_name = 'math';
+
+    student_name 	subject_name
+    Rob 	        math
+    Will 	        math
+    Harambe 	    math
+    Judo 	        math
+
+- The number of each grade (using letter grades A-F) earned in a particular class.
+    SELECT enrollments.grades, COUNT(enrollments.grades) AS grades_per_class, classes.subject_name
+    FROM enrollments
+    JOIN classes ON classes.class_id = enrollments.class_id
+    WHERE classes.subject_name = 'math'
+    GROUP BY enrollments.grades, classes.subject_name
+    ORDER BY enrollments.grades ASC;
+
+    grades 	grades_per_class 	subject_name
+    A 	    2 	              math
+    B 	    1 	              math
+    F 	    1 	              math
+
+- Class names and the total number of students who have taken each class in the list.
+    SELECT classes.subject_name, COUNT(enrollments.student_id) AS students_per_class
+    FROM enrollments
+    JOIN classes ON classes.class_id = enrollments.class_id
+    GROUP BY classes.subject_name;
+
+    subject_name 	students_per_class
+    history 	    1
+    IT 	          3
+    english 	    1
+    math 	        4
+    art 	        2
+
+- The class taken by the largest number of students.
+    SELECT classes.subject_name, COUNT(enrollments.student_id) AS students_per_class
+    FROM enrollments
+    JOIN classes ON classes.class_id = enrollments.class_id
+    GROUP BY classes.subject_name
+    ORDER BY COUNT(enrollments.student_id) DESC
+    LIMIT 1;
+
+    subject_name 	students_per_class
+    math 	        4
