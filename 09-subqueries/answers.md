@@ -132,13 +132,137 @@
       | 2 | Cedric Diggory|
 
     - Make a list of all book titles and denote whether or not a copy of that book is checked out.
+      ```sql
+      SELECT books.title,
+        max(CASE WHEN transactions.checked_in_date is NULL THEN 'true'
+            ELSE 'false'
+        END) AS "checked out"
+      FROM books
+      LEFT OUTER JOIN transactions ON books.isbn IN
+        (SELECT transactions.isbn
+        FROM transactions)
+      WHERE books.isbn = transactions.isbn
+      GROUP BY books.title;
+      ```
+
+      title | checked out
+      ---|---
+      Fantastic Beasts and Where to Find Them | true
+      Advanced Potion-Making | true
+      Hogwarts: A History | false
+
     - In an effort to learn which books take longer to read, the librarians would like you to create a list of average checked out time by book name in the past month.
+      ```sql
+      SELECT books.title, avg(t.check_out_duration) as average_check_out_duration_past_month
+      FROM books
+      JOIN (
+        SELECT isbn, date_part('day', age(checked_in_date, checked_out_date)) as check_out_duration
+        FROM transactions
+        WHERE checked_out_date > '2018-05-01'
+        AND checked_in_date IS NOT NULL) t
+        ON books.isbn = t.isbn
+      GROUP BY books.title;
+      ```
+
+      title | average_check_out_duration_past_month
+      ---|---
+      Fantastic Beasts and Where to Find Them | 2.5
+
     - In order to learn which items should be retired, make a list of all books that have not been checked out in the past 5 years.
+      ```sql
+      SELECT books.title
+      FROM books
+      JOIN transactions ON books.isbn NOT IN
+        (SELECT transactions.isbn
+        FROM transactions
+        WHERE transactions.checked_out_date > CURRENT_DATE - INTERVAL '5 years')
+      WHERE books.isbn = transactions.isbn;
+      ```
+
+      title |
+      ---|
+      Hogwarts: A History |
+
     - List all of the library patrons. If they have one or more books checked out, correspond the books to the patrons.
+      ```sql
+      SELECT patrons.name,
+      CASE WHEN book.title IS NULL THEN 'none'
+      ELSE book.title
+      END AS books_checked_out
+      FROM patrons
+      LEFT JOIN (
+          SELECT books.title, transactions.patron_id
+          FROM books
+          JOIN transactions ON books.isbn = transactions.isbn
+          WHERE transactions.checked_in_date IS NULL
+        ) book
+      ON patrons.id = book.patron_id;
+      ```
+
+      name | books_checked_out
+      ---|---
+      Hermione Granger | none
+      Terry Boot | Advanced Potion-Making
+      Padma Patil | none
+      Cho Chang | none
+      Cedric Diggory | Fantastic Beasts and Where to Find Them
 
 9. Using this Flight schema and data, write queries applying the following scenarios, and include the results:
     - To determine the most profitable airplanes, find all airplane models where each flight has had over 250 paying customers in the past month.
+      ```sql
+      SELECT airplanes.model
+      FROM airplanes
+      JOIN (
+          SELECT flights.flight_number, flights.airplane_model, date
+          FROM flights
+          JOIN transactions ON flights.flight_number = transactions.flight_number
+          WHERE transactions.seats_sold > 250
+        ) f
+      ON airplanes.model = f.airplane_model
+      WHERE date > '2018-05-01';
+      ```
+
+      model |
+      ---|
+      Airbus A330 |
+      Boeing 777 |
+      Airbus A380 |
+
     - To determine the most profitable flights, find all destination-origin pairs where 90% or more of the seats have been sold in the past month.
+      ```sql
+      SELECT ft.flight_number, ROUND(ft.seats_sold * 100.0 / airplanes.seat_capacity, 1) AS percent_capacity_sold
+      FROM airplanes
+      JOIN (
+        SELECT f.flight_number, t.seats_sold, f.airplane_model, t.date
+        FROM flights f
+        JOIN transactions t ON f.flight_number = t.flight_number
+        ) ft
+      ON airplanes.model = ft.airplane_model
+      WHERE ROUND(ft.seats_sold * 100.0 / airplanes.seat_capacity, 1) > 90 AND ft.date > '2018-05-01';
+      ```
+
+      flight_number | percent_capacity_sold
+      ---|---
+      137 | 100
+      8932 | 95
+      57 | 90.1
+
     - The airline is looking to expand its presence in Asia and globally. Find the total revenue of any flight (not time restricted) arriving at or departing from Singapore (SIN).
+      ```sql
+      SELECT t.total_revenue AS total_revenue_for_flights_from_to_sin
+      FROM transactions t
+      JOIN (
+        SELECT flight_number
+        FROM flights
+        WHERE flights.origin = 'SIN' OR flights.destination = 'SIN') f
+      ON t.flight_number = f.flight_number;
+      ```
+
+      total_revenue_for_flights_from_to_sin |
+      ---|
+      250394.7 |
+      131992.12 |
 
 10. Compare the subqueries you've written above. Compare them to the joins you wrote in Checkpoint 6. Which ones are more readable? Which were more logical to write?
+
+    Subqueries are a lot more logical to read and write for me. It is easier to visualize, in one SQL statement, what to do with data without going through multiple JOIN clauses connecting multiple tables.
